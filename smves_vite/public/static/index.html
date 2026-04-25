@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>矿井通风智能管控系统</title>
+    <link rel="stylesheet" href="/public/css/index.css" />
+    <script src="./js/jsm/three_R92.js"></script>
+    <!-- <script src="./js/jsm/three.js"></script> -->
+
+    <!-- <script src="http://www.yanhuangxueyuan.com/versions/threejsR92/build/three.js"></script> -->
+    <script src="./js/package/jquery.min.js"></script>
+    <!-- 引入threejs扩展控件OrbitControls.js -->
+    <script src="./js/jsm/Or1.js"></script>
+    <script src="./js/jsm/OB.js"></script>
+    <script src="./js/jsm/FBX.js"></script>
+    <script src="./js/jsm/MTLL.js"></script>
+    <script src="./js/jsm/STLL.js"></script>
+    <!-- <script src="./js/main.js"></script> -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/renderers/CSS2DRenderer.min.js"></script> -->
+    <script src="./js/jsm/lil-gui.module.min.js" type="module"></script>
+    <script src="./js/jsm/stats.module.js" type="module"></script>
+    <script src="./js/jsm/three.module.js" type="module"></script>
+    <!-- <script src="./js/package/WebGL2Renderer.js"></script> -->
+    <!-- <script src="./js/package/WebGLRenderer.js"></script> -->
+    <script src="./js/object/ball_object.js"></script>
+    <script src="./js/object/scene_object.js"></script>
+    <script src="./js/object/tag_object.js"></script>
+    <script src="./js/object/tube_object.js"></script>
+    <script src="./js/tfwangluo.js"></script>
+    <script src="./Jiesuan.js"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" />
+    <!-- 引入组件库 -->
+    <!-- <script src="https://unpkg.com/element-ui/lib/index.js"></script> -->
+    <!-- <script src="static /js/jquery-1.12.4.min.js"></script>
+<script src="static/js/popper.min.js"></script>
+<script src="static/js/modernizr.custom.17311.js"></script>
+ -->
+  </head>
+
+  <body>
+    <header>
+      <!-- <button  onclick="send()" style="right: 0; display: inline-block; height: 20px; width: 100px;"> </button> -->
+
+      <h1 style="text-align: center">霄 云 煤 矿 智 能 通 风 服 务 信 息 平 台</h1>
+      <div class="showTime" style="font-size: 25px"></div>
+      <!-- 当前时间显示 -->
+      <script>
+        var t = null
+        t = setTimeout(time, 1000) // 开始运行
+        function time() {
+          clearTimeout(t) //时间定时器
+          dt = new Date()
+          var y = dt.getFullYear()
+          var mt = dt.getMonth() + 1
+          var day = dt.getDate()
+          var h = dt.getHours()
+          var m = dt.getMinutes()
+          var s = dt.getSeconds()
+          document.querySelector('.showTime').innerHTML =
+            '当前时间：' + y + '年' + mt + '月' + day + '日' + '-' + h + '时' + m + '分' + s + '秒'
+          t = setTimeout(time, 1000) // 设定定时器，循环运行
+        }
+      </script>
+      <button
+        class="small blue button generate_button"
+        onclick="send();updata();"
+        style="right: 0; display: inline-block"
+      >
+        生成巷道网络
+      </button>
+      <!-- <button   class="small blue button generate_button"  style="right: 0; display: inline-block;">选中巷道</button> -->
+      <!-- <button   class="small blue button generate_button"  style="right: 0; display: inline-block;">风网解算</button> -->
+      <button
+        class="small blue button generate_button"
+        style="right: 0; display: inline-block; float: right"
+        onclick="if(confirm('确认退出')) { window.close(); }"
+      >
+        退出
+      </button>
+      <!-- <button   class="small blue button generate_button"  style="right: 0; display: inline-block; float: right;">逃生路线</button> -->
+      <!-- <button   class="small blue button generate_button"  style="right: 0; display: inline-block; float: right;">智能调风方案</button> -->
+    </header>
+
+    <!-- 页面主题部分 -->
+    <div class="main_">
+      <section class="mainbox">
+        <!-- 左侧导航栏 -->
+        <!-- 第一列 -->
+        <div class="column">
+          <div class="panel one line" style="border-top: 200px">
+            <h2>局部通风系统</h2>
+            <div class="chart" id="left_chart">
+              <div class="container-fan">
+                <div class="data-item">
+                  <strong class="fan-data centered" id="windVolume">20780.98</strong><br />
+                  <p style="text-align: center">吸风量：(m³/min)</p>
+                </div>
+
+                <div class="data-item">
+                  <strong class="fan-data centered" id="windPressure">1686.31</strong><br />
+                  <p style="text-align: center">供风量：(m³/min)</p>
+                </div>
+
+                <div class="data-item">
+                  <strong class="fan-data centered" id="frequency">未知</strong><br />
+                  <p style="text-align: center">频率：(Hz)</p>
+                  <p></p>
+                </div>
+
+                <!-- 
+            // script.js
+                setInterval(() => {
+                  // 这里可以添加逻辑，从服务器获取实时数据并更新
+                  // 假设数据从 AJAX 请求中获得
+                  document.getElementById('windVolume').innerText = (Math.random() * 30000).toFixed(2);
+                  document.getElementById('windPressure').innerText = (Math.random() * 2000).toFixed(2);
+                }, 5000); // 每5秒更新一次
+            -->
+                <div style="text-align: center">
+                  <img
+                    src="./images/局部风机.jpeg"
+                    style="width: 580px; height: 300px; margin: auto"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="panel-footer"></div>
+          </div>
+          <div class="panel">
+            <h2>主通风机系统</h2>
+            <div class="chart">
+              <div class="container-fan">
+                <div class="data-item">
+                  <strong class="fan-data centered" id="windVolume">8932.2</strong><br />
+                  <p style="text-align: center">风量：(m³/min)</p>
+                </div>
+
+                <div class="data-item">
+                  <strong class="fan-data centered" id="windPressure">2184.11</strong><br />
+                  <p style="text-align: center">风压：(Pa)</p>
+                </div>
+
+                <div class="data-item">
+                  <strong class="fan-data centered" id="frequency">49.07</strong><br />
+                  <p style="text-align: center">频率：(Hz)</p>
+                  <p></p>
+                </div>
+
+                <!-- 
+          // script.js
+              setInterval(() => {
+                // 这里可以添加逻辑，从服务器获取实时数据并更新
+                // 假设数据从 AJAX 请求中获得
+                document.getElementById('windVolume').innerText = (Math.random() * 30000).toFixed(2);
+                document.getElementById('windPressure').innerText = (Math.random() * 2000).toFixed(2);
+              }, 5000); // 每5秒更新一次
+          -->
+                <div style="text-align: center">
+                  <img
+                    src="./images/主通风机.png"
+                    style="width: 450px; height: 250px; margin: auto"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="panel-footer"></div>
+          </div>
+          <div class="panel pie">
+            <h2>通风设施远程控制</h2>
+            <div class="chart">
+              <h4 style="color: aliceblue; margin-left: 10px; font-size: 30px">
+                <a href="http://198.87.121.43:8080/zntf/fengMen">风门控制</a>
+              </h4>
+              <div style="text-align: center">
+                <img
+                  src="./images/霄云风门.png"
+                  style="width: 500px; height: 300px; margin-top: 20px"
+                />
+              </div>
+            </div>
+
+            <div class="panel-footer"></div>
+          </div>
+        </div>
+
+        <!-- 第二列 -->
+        <div class="column">
+          <div class="column-main" style="height: 800px; width: 1700px"></div>
+
+          <div
+            class="panel bottom-panel"
+            style="position: absolute; bottom: 0; margin-bottom: 0px; width: 100%"
+          >
+            <h2>矿井风量精准检测</h2>
+            <!-- <div class="chart bottom-chart"></div> -->
+            <div class="chart" id="auto-update-chart" style="width: 100%; height: 100%"></div>
+            <div class="chart table-container" style="width: 100%; height: 100%"></div>
+
+            <div class="panel-footer"></div>
+          </div>
+        </div>
+
+        <!-- 第三列 -->
+        <div class="column" style="width: 500px">
+          <div class="panel pie2">
+            <div style="display: flex; align-items: center">
+              <!-- 上传文件按钮 -->
+              <div
+                style="
+                  background-color: #007bff;
+                  display: inline-block;
+                  padding: 5px 10px;
+                  border-radius: 5px;
+                "
+              >
+                <label for="uploadFile" style="color: white; font-size: 18px; cursor: pointer"
+                  >选择文件</label
+                >
+                <input type="file" id="uploadFile" accept=".txt" style="display: none" />
+              </div>
+
+              <h2 style="margin-left: 1px; margin-right: auto; text-align: center; flex-grow: 1">
+                传感器实时数据
+              </h2>
+            </div>
+            <div class="chart" class="three-line-table">
+              <!-- 三线表 -->
+              <div class="scrollable-table-container">
+                <table style="font-size: 18px">
+                  <tr class="top-line">
+                    <th>位置</th>
+                    <th>数值</th>
+                    <th>单位</th>
+                  </tr>
+                  <tr class="middle-line">
+                    <td>轨道大巷测风站</td>
+                    <td id="station1"></td>
+                    <td>m/s</td>
+                  </tr>
+                  <tr class="middle-line">
+                    <td>上部轨道测风站</td>
+                    <td id="station2"></td>
+                    <td>m/s</td>
+                  </tr>
+                  <tr class="middle-line">
+                    <td>一采区胶带上山回风</td>
+                    <td id="station3"></td>
+                    <td>m/s</td>
+                  </tr>
+                  <tr class="middle-line">
+                    <td>一采区辅助采区胶带巷</td>
+                    <td id="station4"></td>
+                    <td>m/s</td>
+                  </tr>
+                  <tr class="middle-line">
+                    <td>总回风巷</td>
+                    <td id="station5"></td>
+                    <td>m/s</td>
+                  </tr>
+                  <tr class="middle-line bottom-line">
+                    <td>西翼胶带下山联络巷回风</td>
+                    <td id="station6"></td>
+                    <td>m/s</td>
+                  </tr>
+                  <tr class="middle-line bottom-line">
+                    <td>一采区回风</td>
+                    <td id="station7"></td>
+                    <td>m/s</td>
+                  </tr>
+                  <tr class="middle-line bottom-line">
+                    <td>东翼胶带大巷</td>
+                    <td id="station8"></td>
+                    <td>m/s</td>
+                  </tr>
+                  <tr class="middle-line bottom-line">
+                    <td>胶带石门</td>
+                    <td id="station9"></td>
+                    <td>m/s</td>
+                  </tr>
+                  <tr class="middle-line bottom-line">
+                    <td>二采区胶带石门</td>
+                    <td id="station10"></td>
+                    <td>m/s</td>
+                  </tr>
+                  <tr class="middle-line bottom-line">
+                    <td>二采区西翼胶带巷回风</td>
+                    <td id="station11"></td>
+                    <td>m/s</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            <div class="panel-footer"></div>
+          </div>
+          <div class="panel">
+            <h2>综合管理</h2>
+            <div class="chart">
+              <!-- <br>
+          <br>
+          <button class="btn" onclick="showAlert()"><span>风量检测</span></button><br>
+          <button class="btn"onclick="showWindResistanceTable()"> <span>可调节分支风阻调节范围</span> </button><br>
+          <button class="btn" style="text-align: center;" onclick="showWindTable()" > <span>智能调节风方案</span> </button><br> -->
+
+              <br />
+              <div class="containerMAN">
+                <div class="boxMAN">
+                  <div class="iconMAN">
+                    <img
+                      src="./images/循环.png"
+                      alt=""
+                      style="height: 35px; width: 35px; margin-top: 10px"
+                    />
+                  </div>
+                  <!-- 替换为循环符号 -->
+                  <div class="infoMAN">
+                    <div class="valueMAN">7562(m³/min)</div>
+                    <div class="labelMAN">全矿通风量</div>
+                  </div>
+                </div>
+                <div class="boxMAN">
+                  <div class="iconMAN">
+                    <img
+                      src="./images/风叶.png"
+                      alt=""
+                      style="height: 35px; width: 35px; margin-top: 10px"
+                    />
+                  </div>
+                  <!-- 替换为风扇符号 -->
+                  <div class="infoMAN">
+                    <div class="valueMAN">8684(m³/min)</div>
+                    <div class="labelMAN">全矿供风量</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="panel-footer"></div>
+          </div>
+          <div class="panel pie3">
+            <h2>智能优化</h2>
+            <div class="grid-container">
+              <a href="http://198.87.121.43:8080/zntf/zaiBian" target="_blank" class="grid-item">
+                <img src="images/zaibian.png" alt="灾变应急" />
+                <button class="emergency-button">灾变应急</button>
+              </a>
+              <div class="grid-item">
+                <a href="http://198.87.121.43:8080/zntf/mainFan" target="_blank" class="grid-item">
+                  <img src="images/zhufengji.png" alt="主风机监控" />
+                  <button class="emergency-button">主风机监控</button>
+                </a>
+              </div>
+              <div class="grid-item">
+                <a href="http://198.87.121.43:8080/zntf/localFan" target="_blank" class="grid-item">
+                  <img src="images/jubufengji.png" alt="局部风机监控" />
+                  <button class="emergency-button">局部风机监控</button>
+                </a>
+              </div>
+              <div class="grid-item">
+                <a
+                  href="http://198.87.121.43:8080/zntf/fengChuang"
+                  target="_blank"
+                  class="grid-item"
+                >
+                  <img src="images/fengchuang.png" alt="风窗监控" />
+                  <button class="emergency-button">风窗监控</button>
+                </a>
+              </div>
+              <div class="grid-item">
+                <a href="http://198.87.121.43:8080/zntf/fengZhan" target="_blank" class="grid-item">
+                  <img src="images/fengzhan.png" alt="风站监测" />
+                  <button class="emergency-button">风站监测</button>
+                </a>
+              </div>
+              <div class="grid-item">
+                <a href="http://198.87.121.43:8080/admin" target="_blank" class="grid-item">
+                  <img src="images/houtai.png" alt="后台管理" />
+                  <button class="emergency-button">后台管理</button>
+                </a>
+              </div>
+              <!-- <div class="grid-item">
+            <img src="images/module.png" alt="备用模块">
+            <p>备用模块</p>
+          </div>
+          <div class="grid-item">
+            <img src="images/more.png" alt="更多">
+            <p>更多</p>
+          </div> -->
+            </div>
+            <div class="panel-footer"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <script src="js/package/flexible.js"></script>
+    <script src="js/package/echarts.min.js"></script>
+    <script src="js/charts.js"></script>
+
+    <script>
+      var div = document.querySelector('.column-main')
+      // console.log(div.offsetHeight);
+      var tfwangluo1 = new tfwangluo(div)
+      var point
+      let isModelGenerated = false // 状态标识符，初始为 false
+
+      function send() {
+        // 如果模型已经生成，则直接返回，不再执行后续代码
+        if (isModelGenerated) {
+          return
+        }
+
+        $.ajax({
+          async: true,
+          url: 'http://127.0.0.1/get',
+          type: 'GET',
+          success: function (results) {
+            console.log(results)
+            /* 管道 */
+            var tubes = []
+
+            // 创建纹理贴图预加载，避免在循环中重复加载
+            var textureLoader = new THREE.TextureLoader()
+            var high_speed_Texture = textureLoader.load('/images/高标风速.jpg')
+            var high_lower_speed_Texture = textureLoader.load('/images/高标低风速.jpg')
+            var mid_speed_Texture = textureLoader.load('/images/52.png')
+            var low_higher_speed_Texture = textureLoader.load('/images/低标高风速.jpg')
+            var low_speed_Texture = textureLoader.load('/images/低标风速.png')
+
+            // 公共纹理配置，用于流动效果的控制
+            ;[
+              high_speed_Texture,
+              low_speed_Texture,
+              mid_speed_Texture,
+              high_lower_speed_Texture,
+              low_higher_speed_Texture,
+            ].forEach((texture) => {
+              texture.wrapS = THREE.RepeatWrapping
+              texture.wrapT = THREE.RepeatWrapping
+              texture.repeat.set(20, 1) // 在 X 和 Y 轴上重复的值
+            })
+
+            // 遍历管道
+            for (var i = 0; i < results.length; i++) {
+              var id = results[i].id
+              var p1 = {
+                x: parseFloat(results[i].point_left_x), // 确保值为数字
+                y: parseFloat(results[i].point_left_y),
+                z: parseFloat(results[i].point_left_z),
+              }
+
+              var p2 = {
+                x: parseFloat(results[i].point_right_x),
+                y: parseFloat(results[i].point_right_y),
+                z: parseFloat(results[i].point_right_z),
+              }
+              text = results[i].tube_name + '风量：' + results[i].tube_wind_speed + 'm³/min'
+              tubes.push(new tube(id, p1, p2, text))
+              // console.log("p1:", p1, "p2:", p2);
+
+              // 动态调整纹理
+              var material
+              switch (true) {
+                case results[i].tube_wind_speed >= 2000:
+                  material = new THREE.MeshBasicMaterial({
+                    map: high_speed_Texture,
+                  })
+                  break
+
+                case results[i].tube_wind_speed >= 1000 && results[i].tube_wind_speed < 2000:
+                  material = new THREE.MeshBasicMaterial({
+                    map: high_lower_speed_Texture,
+                  })
+                  break
+
+                case results[i].tube_wind_speed >= 500 && results[i].tube_wind_speed < 1000:
+                  material = new THREE.MeshBasicMaterial({
+                    map: mid_speed_Texture,
+                  })
+                  break
+
+                case results[i].tube_wind_speed >= 100 && results[i].tube_wind_speed < 500:
+                  material = new THREE.MeshBasicMaterial({
+                    map: low_higher_speed_Texture,
+                  })
+                  break
+
+                case results[i].tube_wind_speed < 100:
+                  material = new THREE.MeshBasicMaterial({
+                    map: low_speed_Texture,
+                  })
+                  break
+              }
+              tubes[i].material = material
+            }
+
+            // 持续更新纹理流动效果
+            function adjustTexture(texture, tubeLength, repeatY, offsetXIncrement) {
+              // 动态调整 `repeat.x` 与 `repeat.y`
+              texture.repeat.x = tubeLength > 100 ? 6 : 3 // 基于管道实际长度调整密度
+              texture.repeat.y = repeatY
+              // 动态调整偏移量，实现流动效果
+              texture.offset.x -= offsetXIncrement
+            }
+
+            // 获取管道的实际长度
+            function getTubeLength(p1, p2) {
+              return Math.sqrt(
+                Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2) + Math.pow(p2.z - p1.z, 2),
+              )
+            }
+
+            // 调用函数动态调整5个纹理，并持续更新
+            function updateTextureAnimation() {
+              const tubeLength = getTubeLength(p1, p2) // 传入 p1 和 p2（管道两端的点）
+              adjustTexture(high_speed_Texture, tubeLength, 4, 0.01)
+              adjustTexture(high_lower_speed_Texture, tubeLength, 4, 0.01)
+              adjustTexture(mid_speed_Texture, tubeLength, 4, 0.01)
+              adjustTexture(low_higher_speed_Texture, tubeLength, 4, 0.01)
+              adjustTexture(low_speed_Texture, tubeLength, 4, 0.01)
+
+              // 持续更新动画
+              requestAnimationFrame(updateTextureAnimation)
+            }
+
+            // 启动动画
+            updateTextureAnimation()
+
+            tfwangluo1.setTubes(tubes)
+            isModelGenerated = true // 在成功生成模型后，将状态设置为 true
+          },
+        })
+      }
+      function updata() {
+        $.ajax({
+          async: true,
+          url: 'http://127.0.0.1/get',
+          type: 'GET',
+          success: function (results) {
+            for (var i = 0; i < results.length; i++) {
+              var tagName = results[i].tube_name !== null ? results[i].tube_name : results[i].id
+              tfwangluo1.updateTag(
+                results[i].id + '_tag',
+                tagName + '号巷道' + '风量：' + results[i].tube_wind_speed + 'm³/min',
+              )
+              // console.log('风速'+'\n'+results[i].tube_wind_speed);
+            }
+          },
+        })
+        setTimeout(function () {
+          updata()
+        }, 100000)
+      }
+      /*   function generate_extrude(){
+        $.ajax({
+            async: true,
+            url: 'http://127.0.0.1/get',
+            type: 'GET',
+            success: 
+            function(results_extrude) {
+                // console.log(results);
+                // * 管道 
+                var extrudes = [];
+                tfwangluo1.setExtrude(results_extrude);}
+      } )} */
+
+      // function getFsy() {
+      //   setInterval(() => {
+      //     $.ajax({
+      //       async: true,
+      //       url: 'http://198.87.121.43:8080/api/fsy/getDevList',
+      //       type: 'GET',
+      //       success: function (response) {
+      //         console.log(response);
+
+      //         if (response.code !== 0 || !response.data) {
+      //           console.error("获取数据失败");
+      //           return;
+      //         }
+
+      //         // 获取风速仪数据
+      //         const fsy_data = response.data;
+
+      //         // 遍历数据，根据 devName 匹配 DOM 元素
+      //         fsy_data.forEach(device => {
+      //           const devData = JSON.parse(device.devData); // 解析 devData JSON 字符串
+      //           const windSpeed = devData.windSpeed || "-"; // 风速
+      //           const windVolume = devData.windVolume || "-"; // 风量
+
+      //           // 根据 devName 更新指定位置的 DOM 元素
+      //           if (device.devName === '轨道大巷测风站') {
+      //             $("#station1").text(`${windSpeed}`);
+      //             return windSpeed;
+      //           } else if (device.devName === '上部轨道测风站') {
+      //             $("#station2").text(`${windSpeed}`);
+      //           }
+      //         });
+      //       },
+      //       error: function (error) {
+      //         console.error("风速仪数据请求失败:", error);
+      //       }
+      //     });
+      //   }, 1000); // 每隔 1 秒刷新一次数据
+      // }
+      // $(document).ready(function () {
+      //   getFsy();
+      // });
+
+      // 监听文件上传
+      document.getElementById('uploadFile').addEventListener('change', function (event) {
+        clearContent() // 清空原来的内容
+        const file = event.target.files[0]
+        if (!file) {
+          alert('请选择rddata文件！')
+          return
+        }
+
+        const reader = new FileReader()
+        reader.onload = function (e) {
+          const content = e.target.result
+          processFileContent(content)
+        }
+        reader.readAsText(file)
+        // 重置文件选择器的值
+        event.target.value = ''
+      })
+
+      // 清空显示区域的内容
+      function clearContent() {
+        const mappings = {
+          3976: 'station3', // 一采区胶带上山回风
+          833: 'station4', // 一采区辅助采区胶带巷
+          3122: 'station5', // 总回风巷
+          295: 'station6', // 西翼胶带下山联络巷回风
+          489: 'station7', // 一采区回风
+          188: 'station8', // 东翼胶带大巷
+          580: 'station9', //胶带石门
+          2927: 'station10', // 二采区胶带石门
+          2330: 'station11', //二采区西翼胶带巷回风
+        }
+
+        // 清空每个元素对应的内容
+        for (const key in mappings) {
+          console.log('清空')
+          const elementId = mappings[key]
+          const element = document.getElementById(elementId)
+          if (element) {
+            element.textContent = '-----' // 清空内容
+          }
+        }
+      }
+
+      // 处理文件内容
+      function processFileContent(content) {
+        // 分割成每一行
+        const lines = content.split(/\r?\n/)
+
+        // 创建目标编号与 HTML ID 的映射
+        const mappings = {
+          3976: 'station3', // 一采区胶带上山回风
+          833: 'station4', // 一采区辅助采区胶带巷
+          3122: 'station5', // 总回风巷
+          295: 'station6', // 西翼胶带下山联络巷回风
+          489: 'station7', // 一采区回风
+          188: 'station8', // 东翼胶带大巷
+          580: 'station9', //胶带石门
+          2927: 'station10', // 二采区胶带石门
+          2330: 'station11', //二采区西翼胶带巷回风
+        }
+
+        // 遍历每一行数据
+        lines.forEach((line) => {
+          const parts = line.split(',')
+          if (parts.length < 2) return // 若该行数据格式不符合要求，跳过
+          const id = parts[0].trim() // 获取编号
+          const windSpeed = parts[1].trim() // 获取风速
+
+          if (mappings[id]) {
+            const elementId = mappings[id]
+            document.getElementById(elementId).textContent = `${windSpeed}`
+            console.log(`编号: ${id}, 风速: ${windSpeed}`)
+
+            // 获取当前存储的风速数据，若无则设为空数组
+            let windSpeeds = JSON.parse(sessionStorage.getItem('windSpeeds')) || []
+
+            // 检查是否已存在该编号的数据，若存在则更新
+            const existingIndex = windSpeeds.findIndex((entry) => entry.id === id)
+            if (existingIndex !== -1) {
+              windSpeeds[existingIndex].windSpeed = windSpeed // 更新风速
+            } else {
+              windSpeeds.push({ id: id, windSpeed: windSpeed }) // 新增数据
+            }
+
+            // 保存更新的数据到 sessionStorage
+            sessionStorage.setItem('windSpeeds', JSON.stringify(windSpeeds))
+            updateData() // 更新图表数据
+          }
+        })
+      }
+      var myChart = echarts.init(document.getElementById('auto-update-chart'))
+
+      // 配置 ECharts 初始选项
+      var option = {
+        tooltip: {
+          trigger: 'axis',
+        },
+        grid: {
+          top: '20%',
+          left: '5%',
+          bottom: '10%',
+          containLabel: true,
+        },
+        xAxis: {
+          type: 'category',
+          boundaryGap: true,
+          data: [
+            '一采区胶带上山回风',
+            '一采区辅助采区胶带巷',
+            '总回风巷',
+            '西翼胶带下山联络巷回风',
+            '一采区回风',
+            '东翼胶带大巷',
+            '胶带石门',
+            '二采区胶带石门',
+            '二采区西翼胶带巷回风',
+          ],
+          axisLabel: {
+            color: 'rgba(255,255,255,.6)',
+            fontsize: 50,
+            rotate: 45, // 旋转标签
+            interval: 0, // 强制显示所有标签，0表示显示所有，1表示每隔一个显示，以此类推
+            formatter: function (value) {
+              // 这里可以根据需要调整换行的逻辑
+              // 例如，如果内容长度超过10个字符，则在第10个字符后面插入换行符
+              if (value.length > 5) {
+                return value.slice(0, 5) + '\n' + value.slice(5)
+              }
+              return value
+            },
+          },
+          axisLine: {
+            show: false,
+          },
+        },
+        yAxis: {
+          type: 'value',
+          name: '单位',
+          splitLine: {
+            lineStyle: {
+              color: 'rgba(255,255,255,.6)',
+              fontsize: '12',
+            },
+          },
+        },
+        axisLabel: {
+          color: '#fff',
+        },
+        yAxis: {
+          type: 'value',
+          name: '(m³/min)',
+          axisLabel: {
+            color: 'rgba(255,255,255,.6)',
+            fontsize: '16',
+          },
+          axisLine: {
+            show: false,
+          },
+          splitLine: {
+            lineStyle: {
+              color: 'rgba(255,255,255,.1)',
+            },
+          },
+        },
+        series: [
+          {
+            name: '风量',
+            type: 'bar',
+            data: [], // 初始数据为空
+            color: new echarts.graphic.LinearGradient(0, 1, 0, 0, [
+              {
+                //只要修改前四个参数就ok
+                offset: 0,
+                color: 'rgb(176,218,104)',
+              }, //柱图渐变色
+              {
+                offset: 1,
+                color: '#00C6FB',
+              },
+            ]),
+            barWidth: '50%',
+            itemStyle: {
+              barBorderRadius: 8,
+            },
+          },
+        ],
+      }
+
+      // 数据更新函数
+      function updateData() {
+        let storedData = JSON.parse(sessionStorage.getItem('windSpeeds')) || []
+        // 根据存储数据按索引顺序映射新数据
+        // data: ['一采区胶带上山回风', '一采区辅助采区胶带巷', '总回风巷', '西翼胶带下山联络巷回风', '一采区回风', '东翼胶带大巷',
+        // '胶带石门', '二采区胶带石门', '二采区西翼胶带巷回风'],
+        let newData = storedData.map((entry, index) => {
+          // 这里可以通过索引条件自定义赋值逻辑，以下是一个示例
+          if (index === 0) {
+            return entry.windSpeed * 60 * 10.1 // 一采区胶带上山回风
+          } else if (index === 1) {
+            return entry.windSpeed * 60 * 12.3 // 一采区辅助采区胶带巷
+          } else if (index === 2) {
+            return entry.windSpeed * 60 * 19.6 // 总回风巷
+          } else if (index === 3) {
+            return entry.windSpeed * 60 * 18.9 // 西翼胶带下山联络巷回风
+          } else if (index === 4) {
+            return entry.windSpeed * 60 * 13.0 // 一采区回风
+          } else if (index === 5) {
+            return entry.windSpeed * 60 * 13.2 // 东翼胶带大巷
+          } else if (index === 6) {
+            return entry.windSpeed * 60 * 8.5 // 胶带石门
+          } else if (index === 7) {
+            return entry.windSpeed * 60 * 13.7 // 二采区胶带石门
+          } else if (index === 8) {
+            return entry.windSpeed * 60 * 13.5 // 二采区西翼胶带巷回风
+          }
+          return entry.windSpeed // 其他的不变
+        })
+
+        // 更新为新的数据
+        myChart.setOption({
+          series: [
+            {
+              data: newData,
+            },
+          ],
+        })
+      }
+
+      // 初始化图表
+      myChart.setOption(option)
+
+      /* 智能调风方案 */
+      function showWindTable() {
+        // 创建一个新的div元素作为表格容器
+        var tableContainer = document.createElement('div')
+        tableContainer.style.position = 'fixed'
+        tableContainer.style.top = '50%'
+        tableContainer.style.left = '50%'
+        tableContainer.style.transform = 'translate(-50%, -50%)'
+        tableContainer.style.backgroundColor = 'white'
+        tableContainer.style.border = '1px solid black'
+        tableContainer.style.padding = '20px'
+        tableContainer.style.zIndex = '1000'
+        tableContainer.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)'
+
+        // 创建一个表格元素
+        var table = document.createElement('table')
+        table.style.borderCollapse = 'collapse'
+        table.style.width = '100%'
+
+        // 定义36个分支的风量数据
+        var windData = [
+          19.529, 9.36, 10.16, 3.98, 1.93, 4.34, 5.81, 5.92, 5.37, 2.41,
+          //  11-20
+          3.51, 5.92, 6.71, 12.66, 2.31, 1.37, 1.37, 2.19, 0.82, 3.72,
+          //  21-30
+          0.43, 3.13, 3.29, 1.24, 0.72, 3.56, 2.05, 1.97, 2.83, 1.41,
+          //  31-36
+          3.45, 3.4, 1.43, 6.86, 6.86, 12.66,
+        ]
+
+        // 生成4行9列的表格
+        var branchCount = 36 // 总分支数
+        var rowCount = 4 // 行数
+        var colCount = 9 // 列数
+        var currentBranch = 0 // 当前分支索引
+
+        for (var i = 0; i < rowCount; i++) {
+          var row = document.createElement('tr')
+          for (var j = 0; j < colCount; j++) {
+            var cell = document.createElement('td')
+            cell.style.border = '1px solid black'
+            cell.style.padding = '8px'
+            cell.style.textAlign = 'center'
+            if (currentBranch < branchCount) {
+              cell.textContent =
+                '分支 ' + (currentBranch + 1) + ': ' + windData[currentBranch] + ' m³/s' // 从数组中读取风量
+              currentBranch++
+            } else {
+              cell.textContent = '' // 如果分支数不足，留空
+            }
+            row.appendChild(cell)
+          }
+          table.appendChild(row)
+        }
+
+        // 将表格添加到容器中
+        tableContainer.appendChild(table)
+
+        // 添加关闭按钮
+        var closeButton = document.createElement('button')
+        closeButton.textContent = '关闭'
+        closeButton.style.marginTop = '10px'
+        closeButton.style.display = 'block'
+        closeButton.style.marginLeft = 'auto'
+        closeButton.style.marginRight = 'auto'
+        closeButton.onclick = function () {
+          document.body.removeChild(tableContainer)
+        }
+        tableContainer.appendChild(closeButton)
+
+        // 将表格容器添加到页面中
+        document.body.appendChild(tableContainer)
+      }
+
+      /* 风量检测警告不足 */
+      function showAlert() {
+        // 弹出警告框
+        alert('分支13风量不足！')
+      }
+
+      /* 可调节分支风阻调节范围 */
+      function showWindResistanceTable() {
+        // 创建一个新的div元素作为表格容器
+        var tableContainer = document.createElement('div')
+        tableContainer.style.position = 'fixed'
+        tableContainer.style.top = '50%'
+        tableContainer.style.left = '50%'
+        tableContainer.style.transform = 'translate(-50%, -50%)'
+        tableContainer.style.backgroundColor = 'white'
+        tableContainer.style.border = '1px solid black'
+        tableContainer.style.padding = '20px'
+        tableContainer.style.zIndex = '1000'
+        tableContainer.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)'
+
+        // 创建一个表格元素
+        var table = document.createElement('table')
+        table.style.borderCollapse = 'collapse'
+        table.style.width = '100%'
+
+        // 创建表头
+        var headerRow = document.createElement('tr')
+        var header1 = document.createElement('th')
+        header1.textContent = '分支编号'
+        header1.style.border = '1px solid black'
+        header1.style.padding = '8px'
+        var header2 = document.createElement('th')
+        header2.textContent = '风阻调节范围'
+        header2.style.border = '1px solid black'
+        header2.style.padding = '8px'
+        headerRow.appendChild(header1)
+        headerRow.appendChild(header2)
+        table.appendChild(headerRow)
+
+        // 定义三个分支的风阻调节范围
+        var windResistanceData = [
+          { branch: '分支15', range: '[0.1833, 7.82095]' },
+          { branch: '分支16', range: '[0.27313, 5.87975]' },
+          { branch: '分支17', range: '[0.14482, 8.98802]' },
+        ]
+
+        // 填充表格内容
+        windResistanceData.forEach(function (data) {
+          var row = document.createElement('tr')
+          var cell1 = document.createElement('td')
+          cell1.textContent = data.branch
+          cell1.style.border = '1px solid black'
+          cell1.style.padding = '8px'
+          cell1.style.textAlign = 'center'
+          var cell2 = document.createElement('td')
+          cell2.textContent = data.range
+          cell2.style.border = '1px solid black'
+          cell2.style.padding = '8px'
+          cell2.style.textAlign = 'center'
+          row.appendChild(cell1)
+          row.appendChild(cell2)
+          table.appendChild(row)
+        })
+
+        // 将表格添加到容器中
+        tableContainer.appendChild(table)
+
+        // 添加关闭按钮
+        var closeButton = document.createElement('button')
+        closeButton.textContent = '关闭'
+        closeButton.style.marginTop = '10px'
+        closeButton.style.display = 'block'
+        closeButton.style.marginLeft = 'auto'
+        closeButton.style.marginRight = 'auto'
+        closeButton.onclick = function () {
+          document.body.removeChild(tableContainer)
+        }
+        tableContainer.appendChild(closeButton)
+
+        // 将表格容器添加到页面中
+        document.body.appendChild(tableContainer)
+      }
+    </script>
+  </body>
+</html>

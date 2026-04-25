@@ -1,0 +1,76 @@
+# ===== 前端 (Vue / Vite) =====
+frontend/node_modules
+frontend/dist
+frontend/dist-ssr
+frontend/coverage
+frontend/*.local
+frontend/.DS_Store
+frontend/logs
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/.vscode/*
+!frontend/.vscode/extensions.json
+frontend/.idea
+frontend/*.suo
+frontend/*.ntvs*
+frontend/*.njsproj
+frontend/*.sln
+frontend/*.sw?
+frontend/*.tsbuildinfo
+frontend/cypress/videos/
+frontend/cypress/screenshots/
+
+# smves_vite 直接放根目录时也适用
+smves_vite/node_modules
+smves_vite/dist
+smves_vite/dist-ssr
+smves_vite/coverage
+smves_vite/*.local
+
+# ===== 后端 (Django / Python) =====
+# 虚拟环境
+mine_backend/.venv/
+mine_backend/venv/
+mine_backend/env/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# Django
+*.log
+local_settings.py
+mine_backend/db.sqlite3
+mine_backend/db.sqlite3-journal
+mine_backend/media/
+
+# 静态文件收集目录
+mine_backend/staticfiles/
+mine_backend/static_collected/
+
+# 迁移文件（按需，一般建议保留）
+# */migrations/
+
+# 环境变量
+.env
+.env.*
+!.env.example
+
+# ===== 通用 =====
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.idea/
+.vscode/*
+!.vscode/extensions.json
