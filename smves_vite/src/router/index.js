@@ -3,7 +3,6 @@ import LoginPage from '../pages/User/LoginPage.vue'
 import RegisterPage from '../pages/User/RegisterPage.vue'
 import HomePage from '../pages/User/HomePage.vue'
 import threeDPage from '@/pages/threeD/threeDPage.vue'
-import threeDVentNetPage from '../pages/threeD/threeDVentNetPage.vue'
 import DustRemovalPage from '@/pages/DustRemoval/DustRemovalPage.vue'
 // 创建路由实例
 const routes = [
@@ -25,11 +24,6 @@ const routes = [
     path: '/Home',
     name: 'HomePage',
     component: HomePage,
-  },
-  {
-    path: '/threeDVentNet',
-    name: 'threeDVentNetComponentPage',
-    component: threeDVentNetPage,
   },
   {
     path: '/threeD',

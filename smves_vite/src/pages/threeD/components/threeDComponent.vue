@@ -28,6 +28,18 @@ const animatedTubes = ref([])
 // 定义是否已生成模型
 let isModelGenerated = false
 
+/** 矿工配置 */
+const MINER_CONFIG = {
+  count: 8, // 矿工数量
+  spriteScale: 15, // Sprite 大小（世界坐标单位），可根据视觉调整
+  speed_min: 0.0006, // 最小移动速度（0~1 进度/帧）
+  speed_max: 0.0008, // 最大移动速度
+  image_path: '/models/thumbnail.jpeg', // 矿工图片
+}
+
+// 矿工状态列表（每帧在 animate 中更新）
+let miners = []
+
 // 纹理加载器
 const textureLoader = new THREE.TextureLoader()
 
@@ -100,12 +112,38 @@ const init = () => {
 const animate = () => {
   requestAnimationFrame(animate)
 
+  // 纹理动画
   animatedTubes.value.forEach((tube) => {
     if (tube.material.map && tube.userData.windSpeed) {
       const speedFactor = 0.000001
       tube.material.map.offset.x -= tube.userData.windSpeed * speedFactor
     }
   })
+
+  // 矿工位置更新
+  for (let mi = 0; mi < miners.length; mi++) {
+    const m = miners[mi]
+    m.progress += m.speed * m.direction
+
+    // 到达巷道端点 → 原路折返（来回弹跳）
+    if (m.progress >= 1 || m.progress <= 0) {
+      m.direction *= -1
+      m.progress = Math.max(0, Math.min(1, m.progress))
+    }
+
+    // 插值得到当前位置
+    const mp1 = new THREE.Vector3(m.tunnel.p1.x, m.tunnel.p1.y, m.tunnel.p1.z)
+    const mp2 = new THREE.Vector3(m.tunnel.p2.x, m.tunnel.p2.y, m.tunnel.p2.z)
+    const mpos = new THREE.Vector3().lerpVectors(mp1, mp2, m.progress)
+    m.model.position.copy(mpos)
+
+    // 朝向行进方向
+    const lookDir =
+      m.direction > 0
+        ? new THREE.Vector3().subVectors(mp2, mp1).normalize()
+        : new THREE.Vector3().subVectors(mp1, mp2).normalize()
+    m.model.lookAt(mpos.clone().add(lookDir))
+  }
 
   controls.update()
   renderer.render(scene, camera)
@@ -242,6 +280,31 @@ const renderModel = async () => {
     // --- 升级版修改：结束 ---
 
     isModelGenerated = true
+
+    // 提取巷道端点用于矿工初始化
+    const tunnelList = tubesData
+      .filter((data) => {
+        const x1 = Number(data['point_left_x'])
+        const y1 = Number(data['point_left_y'])
+        const z1 = Number(data['point_left_z'])
+        const x2 = Number(data['point_right_x'])
+        const y2 = Number(data['point_right_y'])
+        const z2 = Number(data['point_right_z'])
+        return !isNaN(x1) && !isNaN(y1) && !isNaN(z1) && !isNaN(x2) && !isNaN(y2) && !isNaN(z2)
+      })
+      .map((data) => ({
+        p1: {
+          x: Number(data['point_left_x']),
+          y: Number(data['point_left_y']),
+          z: Number(data['point_left_z']),
+        },
+        p2: {
+          x: Number(data['point_right_x']),
+          y: Number(data['point_right_y']),
+          z: Number(data['point_right_z']),
+        },
+      }))
+    initMiners(tunnelList)
   } catch (error) {
     console.error('模型生成失败:', error)
     ElMessage.error(`模型生成失败: ${error.message}`)
@@ -280,6 +343,50 @@ const createTube = (id, p1, p2, text, material, speed) => {
   }
 
   return tubeMesh
+}
+
+/**
+ * 初始化矿工 Sprite，随机分配到各巷道初始漫游
+ * @param {Array} tunnelList - 巷道列表 [{p1:{x,y,z}, p2:{x,y,z}}]
+ */
+const initMiners = (tunnelList) => {
+  if (!tunnelList || tunnelList.length === 0) return
+
+  // 清除旧矿工
+  miners.forEach((m) => group.remove(m.model))
+  miners = []
+
+  // 加载矿工图片级理
+  const texture = new THREE.TextureLoader().load(MINER_CONFIG.image_path)
+
+  for (let i = 0; i < MINER_CONFIG.count; i++) {
+    // 创建 Sprite 材质（每个矿工独立实例）
+    const spriteMaterial = new THREE.SpriteMaterial({
+      map: texture,
+      depthTest: false, // 不被巷道管道遇挡
+    })
+    const sprite = new THREE.Sprite(spriteMaterial)
+    sprite.scale.set(MINER_CONFIG.spriteScale, MINER_CONFIG.spriteScale, 1)
+    sprite.renderOrder = 10 // 在管道之后渲染
+
+    // 随机分配巷道、进度、速度、方向
+    const t = tunnelList[Math.floor(Math.random() * tunnelList.length)]
+    const progress = Math.random()
+    const speed =
+      MINER_CONFIG.speed_min + Math.random() * (MINER_CONFIG.speed_max - MINER_CONFIG.speed_min)
+    const direction = Math.random() > 0.5 ? 1 : -1
+
+    // 设置初始位置
+    const ip1 = new THREE.Vector3(t.p1.x, t.p1.y, t.p1.z)
+    const ip2 = new THREE.Vector3(t.p2.x, t.p2.y, t.p2.z)
+    const initPos = new THREE.Vector3().lerpVectors(ip1, ip2, progress)
+    sprite.position.copy(initPos)
+
+    group.add(sprite)
+    miners.push({ model: sprite, tunnel: t, tunnelList, progress, speed, direction })
+  }
+
+  console.log('[矿工] 初始化完成，共', miners.length, '个 Sprite 矿工')
 }
 
 // 标签生成函数
