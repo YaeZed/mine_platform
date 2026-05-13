@@ -34,7 +34,7 @@ const MINER_CONFIG = {
   spriteScale: 15, // Sprite 大小（世界坐标单位），可根据视觉调整
   speed_min: 0.0006, // 最小移动速度（0~1 进度/帧）
   speed_max: 0.0008, // 最大移动速度
-  image_path: '/models/thumbnail.jpeg', // 矿工图片
+  image_path: '/models/miner.png', // 矿工图片
 }
 
 // 矿工状态列表（每帧在 animate 中更新）
@@ -136,13 +136,6 @@ const animate = () => {
     const mp2 = new THREE.Vector3(m.tunnel.p2.x, m.tunnel.p2.y, m.tunnel.p2.z)
     const mpos = new THREE.Vector3().lerpVectors(mp1, mp2, m.progress)
     m.model.position.copy(mpos)
-
-    // 朝向行进方向
-    const lookDir =
-      m.direction > 0
-        ? new THREE.Vector3().subVectors(mp2, mp1).normalize()
-        : new THREE.Vector3().subVectors(mp1, mp2).normalize()
-    m.model.lookAt(mpos.clone().add(lookDir))
   }
 
   controls.update()
@@ -346,6 +339,58 @@ const createTube = (id, p1, p2, text, material, speed) => {
 }
 
 /**
+ * 生成带边框和连线的矿工名字标签 Canvas
+ */
+const createMinerLabelCanvas = (text) => {
+  const canvas = document.createElement('canvas')
+  canvas.width = 256
+  canvas.height = 128
+  const ctx = canvas.getContext('2d')
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  // 绘制半透明背景框和青色边框
+  ctx.fillStyle = 'rgba(0, 40, 60, 0.7)'
+  ctx.strokeStyle = '#00ffff'
+  ctx.lineWidth = 4
+
+  const margin = 10
+  const boxWidth = canvas.width - margin * 2
+  const boxHeight = canvas.height - margin * 2 - 30 // 留出底部画连线的空间
+
+  // 绘制矩形边框（带发光）
+  ctx.beginPath()
+  ctx.shadowColor = '#00ffff'
+  ctx.shadowBlur = 10
+  ctx.rect(margin, margin, boxWidth, boxHeight)
+  ctx.fill()
+  ctx.stroke()
+  
+  // 关掉阴影以绘制其他锐利的元素
+  ctx.shadowBlur = 0
+
+  // 绘制向下连接的线和点
+  ctx.beginPath()
+  ctx.moveTo(canvas.width / 2, margin + boxHeight)
+  ctx.lineTo(canvas.width / 2, canvas.height - 10)
+  ctx.stroke()
+  
+  ctx.beginPath()
+  ctx.arc(canvas.width / 2, canvas.height - 10, 6, 0, Math.PI * 2)
+  ctx.fillStyle = '#00ffff'
+  ctx.fill()
+
+  // 绘制文字
+  ctx.font = 'bold 44px sans-serif'
+  ctx.fillStyle = '#00ffff'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(text, canvas.width / 2, margin + boxHeight / 2 + 2) // +2 是字体基线的微调
+
+  return canvas
+}
+
+/**
  * 初始化矿工 Sprite，随机分配到各巷道初始漫游
  * @param {Array} tunnelList - 巷道列表 [{p1:{x,y,z}, p2:{x,y,z}}]
  */
@@ -360,14 +405,36 @@ const initMiners = (tunnelList) => {
   const texture = new THREE.TextureLoader().load(MINER_CONFIG.image_path)
 
   for (let i = 0; i < MINER_CONFIG.count; i++) {
-    // 创建 Sprite 材质（每个矿工独立实例）
+    // 创建一个 Group 将图片和标签包起来作为一个整体
+    const minerGroup = new THREE.Group()
+
+    // 1. 创建矿工图片 Sprite
     const spriteMaterial = new THREE.SpriteMaterial({
       map: texture,
+      transparent: true, // 开启透明度支持
       depthTest: false, // 不被巷道管道遇挡
     })
     const sprite = new THREE.Sprite(spriteMaterial)
     sprite.scale.set(MINER_CONFIG.spriteScale, MINER_CONFIG.spriteScale, 1)
     sprite.renderOrder = 10 // 在管道之后渲染
+    minerGroup.add(sprite)
+
+    // 2. 创建悬浮文字标签 Sprite
+    const labelCanvas = createMinerLabelCanvas(`人员 ${i + 1}`)
+    const labelTexture = new THREE.CanvasTexture(labelCanvas)
+    const labelMaterial = new THREE.SpriteMaterial({
+      map: labelTexture,
+      transparent: true,
+      depthTest: false,
+    })
+    const labelSprite = new THREE.Sprite(labelMaterial)
+    // 根据画布宽高比设置 Sprite 缩放 (256x128 => 比例 2:1)
+    const labelWidth = MINER_CONFIG.spriteScale * 1.5
+    labelSprite.scale.set(labelWidth, labelWidth / 2, 1)
+    // 将标签移到矿工正上方，连线的圆点刚好对准矿工头部
+    labelSprite.position.set(0, MINER_CONFIG.spriteScale * 0.8, 0)
+    labelSprite.renderOrder = 11
+    minerGroup.add(labelSprite)
 
     // 随机分配巷道、进度、速度、方向
     const t = tunnelList[Math.floor(Math.random() * tunnelList.length)]
@@ -380,10 +447,10 @@ const initMiners = (tunnelList) => {
     const ip1 = new THREE.Vector3(t.p1.x, t.p1.y, t.p1.z)
     const ip2 = new THREE.Vector3(t.p2.x, t.p2.y, t.p2.z)
     const initPos = new THREE.Vector3().lerpVectors(ip1, ip2, progress)
-    sprite.position.copy(initPos)
+    minerGroup.position.copy(initPos)
 
-    group.add(sprite)
-    miners.push({ model: sprite, tunnel: t, tunnelList, progress, speed, direction })
+    group.add(minerGroup)
+    miners.push({ model: minerGroup, tunnel: t, tunnelList, progress, speed, direction })
   }
 
   console.log('[矿工] 初始化完成，共', miners.length, '个 Sprite 矿工')

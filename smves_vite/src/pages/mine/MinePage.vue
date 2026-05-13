@@ -33,7 +33,7 @@
       </el-button>
     </div>
 
-    <!-- 标签栏 
+    <!-- 标签栏
     <div class="tag-bar">
       <el-tag
         class="tag-item"
@@ -86,7 +86,7 @@ const functionList = ref([
 const userData = localStorage.getItem('userData')
 const nickname = JSON.parse(userData).nickname
 const toHome = () => {
-  router.push('/HomePage')
+  router.push('/Home')
 }
 // 点击功能栏时，激活对应的菜单
 const setActiveFunc = (funcName) => {

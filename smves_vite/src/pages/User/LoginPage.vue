@@ -122,7 +122,7 @@ export default {
 
           // 跳转到主页
           this.$router.push({
-            path: '/HomePage',
+            path: '/Home',
           })
         }
       } catch (error) {

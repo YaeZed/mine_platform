@@ -7,7 +7,7 @@
       {{ currentTime }}
     </div>
 
-    <button class="home-btn" @click="() => $router.push('/HomePage')">返回主页</button>
+    <button class="home-btn" @click="() => $router.push('/Home')">返回主页</button>
   </header>
 </template>
 
